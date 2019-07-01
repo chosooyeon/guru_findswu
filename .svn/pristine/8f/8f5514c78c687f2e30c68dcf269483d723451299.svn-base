@@ -1,0 +1,143 @@
+package com.example.user.finalproject.adapter;
+
+/**
+ * Created by user on 2018-07-27.
+ * 잃어버린 분실물
+ */
+
+import android.content.Context;
+import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.BaseAdapter;
+import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.TextView;
+
+import com.example.user.finalproject.LostWriteActivity;
+import com.example.user.finalproject.R;
+import com.example.user.finalproject.bean.SaveBean;
+import com.example.user.finalproject.bean.LostBean;
+import com.example.user.finalproject.bean.Util;
+import com.google.gson.Gson;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Created by user on 2018-07-27.
+ */
+
+public class LostAdapter extends BaseAdapter {
+
+    private Context mContext;
+    private List<LostBean> mList;
+    private LayoutInflater mInflater;
+
+
+    public LostAdapter(Context context, List<LostBean> list) {
+        mContext = context;
+        mList = list;
+        mInflater = (LayoutInflater)mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+    }
+
+    @Override
+    public int getCount() {
+        // 리스트 갯수
+        return mList.size();
+    }
+
+    @Override
+    public Object getItem(int position) {
+        //고유의 데이터가 넘어감
+        return mList.get(position);
+    }
+
+    @Override
+    public long getItemId(int position) {
+        return position;
+    }
+
+    @Override
+    public View getView(int position, View convertView, ViewGroup parent) {
+
+        // 인플레이터로 뷰 가져옴
+        convertView = mInflater.inflate(R.layout.list_view, null);
+
+        final LostBean bean = mList.get(position);
+
+        TextView txtTitle = convertView.findViewById(R.id.txtTitle);
+        TextView txtContent = convertView.findViewById(R.id.txtContent);
+
+        txtTitle.setText(bean.getTitle());
+        txtContent.setText(bean.getContent());
+
+        ImageView imgPhoto = convertView.findViewById(R.id.imgPhoto);
+        if(bean.getImgPath() != null) {
+            Bitmap bitmap = BitmapFactory.decodeFile(bean.getImgPath());
+            imgPhoto.setImageBitmap(bitmap);
+        }
+
+        TextView txtDate = convertView.findViewById(R.id.txtDate);
+        txtDate.setText(bean.getRegDate());
+
+        Button btnUpdate = convertView.findViewById(R.id.btnUpdate);
+        Button btnDel = convertView.findViewById(R.id.btnDel);
+
+        btnUpdate.setTag(position);
+        btnDel.setTag(position);
+
+        // 수정 버튼
+        btnUpdate.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Integer selIdx = (Integer)v.getTag();
+
+                if(selIdx != null) {
+                    LostBean bean = mList.get(selIdx.intValue());
+
+                    // 선택된 행의 인덱스 값 보냄
+                    bean.setSelIdx(selIdx.intValue());
+
+                    Intent i = new Intent(mContext, LostWriteActivity.class);
+                    i.putExtra(LostBean.class.getName(), bean);
+                    mContext.startActivity(i);
+                }
+            }
+        });
+
+
+        // 삭제 버튼
+        btnDel.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                LostBean lostBean = new LostBean();
+                mList = new ArrayList<LostBean>();
+                Gson gson = new Gson();
+
+                String jsonStr = Util.openFile(mContext, SaveBean.class.getName());
+                SaveBean saveBean = gson.fromJson(jsonStr, SaveBean.class);
+
+                // 선택된 삭제 버튼의 메모된 인덱스 번호를 취득
+                Integer selIdx = (Integer) v.getTag();
+
+                if (selIdx != null) {
+                    //화면상 삭제
+                    mList.remove(selIdx.intValue()); // 해당 인덱스의 데이터 삭제
+
+                    String jsonStr2 = gson.toJson(lostBean);
+                    Util.saveFile(mContext, LostBean.class.getName(), jsonStr2);
+                    saveBean.getLostBeanList().remove(selIdx.intValue());
+
+                    LostAdapter.this.notifyDataSetInvalidated(); // 어댑터 리프레쉬
+                }
+            }
+        });
+
+        return convertView;
+    }
+
+}

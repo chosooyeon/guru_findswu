@@ -1,0 +1,15 @@
+package com.example.user.finalproject;
+
+// 게시물 수정하는 액티비티
+
+import android.support.v7.app.AppCompatActivity;
+import android.os.Bundle;
+
+public class FoundUpdateActivity extends AppCompatActivity {
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_found_update);
+    }
+}

@@ -1,0 +1,123 @@
+package com.example.user.finalproject.tab;
+
+import android.content.Context;
+import android.content.Intent;
+import android.location.LocationManager;
+import android.os.Bundle;
+import android.provider.Settings;
+import android.support.annotation.Nullable;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentTransaction;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+
+import com.example.user.finalproject.R;
+import com.example.user.finalproject.bean.FoundBean;
+import com.example.user.finalproject.bean.SaveBean;
+import com.example.user.finalproject.bean.Util;
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.MapFragment;
+import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.gson.Gson;
+
+import java.util.List;
+
+/**
+ * Created by user on 2018-07-27.
+ */
+
+public class TabMapFragment extends Fragment {
+
+    private FoundBean mFoundBean;
+    private LocationManager mLocManager;
+    private LatLng mCurPosLatLng = new LatLng(37.6281894, 127.0897268); // 현재 위치의 위도, 경도,
+    private MapFragment mMapFragment;
+    private SaveBean mSaveBean;
+    private View mView;
+    public static final String MEMBER_FILE_NAME = "memberFileName";
+
+    @Nullable
+    @Override
+    public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+
+        mView = inflater.inflate(R.layout.map_view, container, false);
+
+        mMapFragment = ((MapFragment) getActivity().getFragmentManager().findFragmentById(R.id.map));
+        mMapFragment.getMapAsync(onMapReadyCallback);
+
+        // GPS가 켜져 있는지 확인한다.
+        mLocManager = (LocationManager)getContext().getSystemService(Context.LOCATION_SERVICE);
+        if(!mLocManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+            Intent i = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+            i.addCategory(Intent.CATEGORY_DEFAULT);
+            startActivity(i);
+        }
+
+        String jsonStr = Util.openFile(getContext(), SaveBean.class.getName());
+        if(jsonStr != null) {
+            Gson gson = new Gson();
+            mSaveBean = gson.fromJson(jsonStr, SaveBean.class);
+        }
+
+        return mView;
+    }
+
+
+    public OnMapReadyCallback onMapReadyCallback = new OnMapReadyCallback() {
+        @Override
+        public void onMapReady(GoogleMap googleMap) {
+
+            googleMap.getUiSettings().setZoomControlsEnabled(true);
+
+            if (mCurPosLatLng == null) {
+                    mCurPosLatLng = new LatLng(37.6281894, 127.0897268);
+                    MarkerOptions markerOptions = new MarkerOptions();
+                    markerOptions.position(mCurPosLatLng);
+                    markerOptions.title("서울여자대학교");
+                    markerOptions.snippet("제2과학관");
+
+                    googleMap.addMarker(markerOptions);
+                    googleMap.moveCamera(CameraUpdateFactory.newLatLng(mCurPosLatLng));
+            }
+            else {
+
+                if(mSaveBean != null && mSaveBean.getFoundBeanList() != null) {
+                    List<FoundBean> list = mSaveBean.getFoundBeanList();
+
+                    for(int i=0; i<list.size(); i++) {
+                        FoundBean foundBean = list.get(i);
+                        if(foundBean.getLatLongitude() == null) {
+                            continue;
+                        }
+                        MarkerOptions markerOptions = new MarkerOptions();
+                        mCurPosLatLng = new LatLng(foundBean.getLatLongitude().latitude, foundBean.getLatLongitude().longitude);
+                        markerOptions.position(mCurPosLatLng);
+
+                        googleMap.addMarker(markerOptions);
+                        googleMap.moveCamera(CameraUpdateFactory.newLatLng(mCurPosLatLng));
+                    }
+                }
+
+            }
+
+            if(mCurPosLatLng != null) {
+                googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(37.6281894, 127.0897268), 17));
+                mCurPosLatLng = null;
+            }
+        }
+    };
+
+    @Override
+    public void onResume() {
+        super.onResume();
+
+        mMapFragment.getMapAsync(onMapReadyCallback);
+    }
+
+
+}

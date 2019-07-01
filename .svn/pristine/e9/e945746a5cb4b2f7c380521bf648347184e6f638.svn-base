@@ -1,0 +1,166 @@
+package com.example.user.finalproject;
+
+import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.support.v7.app.AppCompatActivity;
+import android.os.Bundle;
+import android.view.MotionEvent;
+import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.ListView;
+import android.widget.ScrollView;
+import android.widget.TextView;
+
+import com.example.user.finalproject.adapter.ChatAdapter;
+import com.example.user.finalproject.adapter.FoundAdapter;
+import com.example.user.finalproject.adapter.LostAdapter;
+import com.example.user.finalproject.bean.FCBean;
+import com.example.user.finalproject.bean.FoundBean;
+import com.example.user.finalproject.bean.LostBean;
+import com.example.user.finalproject.bean.SaveBean;
+import com.example.user.finalproject.bean.Util;
+import com.google.gson.Gson;
+
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+public class PostViewActivity extends AppCompatActivity {
+
+    private ScrollView mScrollView;
+    private ListView mLstChat;
+    private ChatAdapter mAdapter;
+    public static List<FoundBean> mFoundBeanList = new ArrayList<FoundBean>();
+    public static List<LostBean> mLostBeanList = new ArrayList<LostBean>();
+    private SaveBean mSaveBean;
+    private Button mBtnWrite;
+    private EditText mEdtWrite;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_post_view);
+
+        FoundBean foundBean = (FoundBean) getIntent().getSerializableExtra(FoundAdapter.KEY_FOUND_DATA_CLASS);
+        LostBean lostBean = (LostBean) getIntent().getSerializableExtra(LostAdapter.KEY_LOST_DATA_CLASS);
+
+        mScrollView = findViewById(R.id.scrollView);
+        TextView txtTitle = findViewById(R.id.txtTitle);
+        TextView txtContent = findViewById(R.id.txtContent);
+        ImageView imgPhoto = findViewById(R.id.imgPhoto);
+
+        mLstChat = findViewById(R.id.lstChat);
+        mBtnWrite = findViewById(R.id.btnWrite);
+        mEdtWrite = findViewById(R.id.edtWrite);
+
+        mBtnWrite.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                saveComment();
+            }
+        });
+
+
+
+        if(foundBean != null) {
+            txtTitle.setText(foundBean.getTitle());
+            txtContent.setText(foundBean.getContent());
+        }
+
+
+        if(foundBean != null && foundBean.getImgPath() != null ) {
+            Bitmap bitmap = BitmapFactory.decodeFile( foundBean.getImgPath() );
+            imgPhoto.setImageBitmap(bitmap);
+        }
+
+
+        if(lostBean != null) {
+            txtTitle.setText(lostBean.getTitle());
+            txtContent.setText(lostBean.getContent());
+        }
+
+
+        if(lostBean != null && lostBean.getImgPath() != null ) {
+            Bitmap bitmap = BitmapFactory.decodeFile( lostBean.getImgPath() );
+            imgPhoto.setImageBitmap(bitmap);
+        }
+
+
+    }
+
+    private void saveComment() {
+        FCBean fcBean = (FCBean)getIntent().getSerializableExtra(FCBean.class.getName());
+
+        if (fcBean != null) {
+
+            fcBean.setComment(mEdtWrite.getText().toString());
+
+            Gson gson = new Gson();
+
+            String jsonStr = Util.openFile(this, SaveBean.class.getName());
+            SaveBean saveBean = gson.fromJson(jsonStr, SaveBean.class);
+
+            // 날짜
+            String timeStamp = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
+            fcBean.setRegDate(timeStamp);
+
+            List<FCBean> mFCBeanList = saveBean.getFcBeanList();
+            mFCBeanList.set(fcBean.getSelIdx(), fcBean);
+
+            //저장
+            String jsonStr2 = gson.toJson(saveBean);
+            Util.saveFile(PostViewActivity.this, SaveBean.class.getName(), jsonStr2);
+
+        } else if (fcBean == null) {
+
+            //Toast.makeText(this,edtText.getText().toString()+", ",Toast.LENGTH_SHORT).show();
+
+            fcBean = new FCBean();
+            fcBean.setComment(mEdtWrite.getText().toString());
+
+            Gson gson = new Gson();
+
+            String jsonStr = Util.openFile(this, SaveBean.class.getName());
+            SaveBean saveBean = gson.fromJson(jsonStr, SaveBean.class);
+
+            List<FCBean> list = saveBean.getFcBeanList();
+            list.add(fcBean);
+
+            //저장
+            String jsonStr2 = gson.toJson(saveBean);
+            Util.saveFile(PostViewActivity.this, SaveBean.class.getName(), jsonStr2);
+
+
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        // 리스트 데이터를 만든다
+        String jsonStr = Util.openFile(PostViewActivity.this, SaveBean.class.getName());
+        Gson gson = new Gson();
+        mSaveBean = gson.fromJson(jsonStr, SaveBean.class);
+
+        // Adapter를  생성한다. (Adapter에 리스트 데이터를 넘겨준다.)
+        mAdapter = new ChatAdapter(PostViewActivity.this, mSaveBean.getFcBeanList());
+
+        // 최종적으로 Adapter를 ListView에 세팅한다.
+        mLstChat.setAdapter(mAdapter);
+
+        mLstChat.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                mScrollView.requestDisallowInterceptTouchEvent(true);
+                return false;
+            }
+        });
+
+    }
+}

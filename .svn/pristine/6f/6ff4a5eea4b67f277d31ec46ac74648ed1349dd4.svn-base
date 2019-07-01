@@ -1,0 +1,68 @@
+package com.example.user.finalproject;
+
+// 게시물 수정하는 액티비티
+
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.support.v7.app.AppCompatActivity;
+import android.os.Bundle;
+import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ImageView;
+
+import com.example.user.finalproject.bean.FoundBean;
+import com.example.user.finalproject.bean.SaveBean;
+import com.example.user.finalproject.bean.Util;
+import com.google.gson.Gson;
+
+public class FoundUpdateActivity extends AppCompatActivity {
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_found_update);
+
+        final FoundBean bean = (FoundBean)getIntent().getSerializableExtra(FoundBean.class.getName());
+
+        final EditText edtTitle = findViewById(R.id.edtTitle);
+        final EditText edtContent = findViewById(R.id.edtContent);
+        final EditText joinPwd = findViewById(R.id.joinPwd);
+        final ImageView imgCamera = findViewById(R.id.imgCamera);
+
+        edtTitle.setText(bean.getTitle());
+        edtContent.setText(bean.getContent());
+        joinPwd.setText(bean.getJoinPwd());
+
+        if(bean != null && bean.getImgPath() != null) {
+            Bitmap bitmap = BitmapFactory.decodeFile(bean.getImgPath());
+            imgCamera.setImageBitmap(bitmap);
+        }
+
+        Button btnUpdate = findViewById(R.id.btnUpdate);
+
+        btnUpdate.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String jsonStr = Util.openFile(FoundUpdateActivity.this, SaveBean.class.getName());
+                Gson gson = new Gson();
+                SaveBean saveBean = gson.fromJson(jsonStr, SaveBean.class);
+
+                FoundBean updBean = saveBean.getFoundBean();
+
+                updBean.setTitle(edtTitle.getText().toString());
+                updBean.setContent(edtContent.getText().toString());
+                updBean.setJoinPwd(joinPwd.getText().toString());
+
+                saveBean.setFoundBean(updBean);
+                String jsonStr2 = gson.toJson(saveBean);
+                Util.saveFile(FoundUpdateActivity.this, SaveBean.class.getName(), jsonStr2);
+
+                finish();
+            }
+        });
+
+
+
+    }
+}

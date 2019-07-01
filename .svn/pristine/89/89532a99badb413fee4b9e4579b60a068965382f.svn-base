@@ -1,0 +1,85 @@
+package com.example.user.finalproject.tab;
+
+import android.content.Intent;
+import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ListView;
+
+
+import com.example.user.finalproject.LostWriteActivity;
+import com.example.user.finalproject.R;
+import com.example.user.finalproject.adapter.LostAdapter;
+import com.example.user.finalproject.bean.LostBean;
+import com.example.user.finalproject.bean.SaveBean;
+import com.example.user.finalproject.bean.Util;
+import com.google.gson.Gson;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class TabLostFragment extends Fragment {
+
+    //멤버변수
+    private ListView mLstLostMember;
+    private LostAdapter mAdapter;
+    public static List<LostBean> mLostList = new ArrayList<LostBean>();
+    private SaveBean mSaveBean;
+    private EditText mEdtSearch;
+    private Button mBtnSearch;
+
+
+    public TabLostFragment() {
+        // Required empty public constructor
+    }
+
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+
+        // Inflate the layout for this fragment
+        View view = inflater.inflate(R.layout.lost_fragment, container, false);
+
+        //TODO 여기에 View를 찾고 이벤트를 등록하고 등등의 처리를 할 수 있다.
+        //getView().findViewById(R.id.btn1).setOnClickListener();
+
+        mLstLostMember = view.findViewById(R.id.lstLostMember);
+        mEdtSearch = view.findViewById(R.id.edtSearch);
+        mBtnSearch = view.findViewById(R.id.btnSearch);
+
+        // 글 쓰기 버튼
+        view.findViewById(R.id.btnPlus).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent i = new Intent(getActivity(), LostWriteActivity.class);
+                startActivity(i);
+            }
+        });
+
+
+        return view;
+    }
+
+    public void onResume() {
+
+        super.onResume();
+
+        String jsonStr = Util.openFile(getActivity(), SaveBean.class.getName());
+        if(jsonStr != null) {
+            Gson gson = new Gson();
+            mSaveBean = gson.fromJson(jsonStr, SaveBean.class);
+
+            if (mSaveBean != null) {
+                mAdapter = new LostAdapter(getActivity(), mSaveBean.getLostBeanList());
+                mLstLostMember.setAdapter(mAdapter);
+            }
+        }
+
+    }
+
+}

@@ -1,0 +1,54 @@
+package com.example.user.finalproject;
+
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.support.v7.app.AppCompatActivity;
+import android.os.Bundle;
+import android.widget.ImageView;
+import android.widget.TextView;
+
+import com.example.user.finalproject.adapter.FoundAdapter;
+import com.example.user.finalproject.adapter.LostAdapter;
+import com.example.user.finalproject.bean.FoundBean;
+import com.example.user.finalproject.bean.LostBean;
+
+public class PostViewActivity extends AppCompatActivity {
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_post_view);
+
+        FoundBean foundBean = (FoundBean) getIntent().getSerializableExtra(FoundAdapter.KEY_DATA_CLASS);
+        //LostBean lostBean = (LostBean) getIntent().getSerializableExtra(LostAdapter.KEY_DATA_CLASS);
+
+        TextView txtTitle = findViewById(R.id.txtTitle);
+        TextView txtContent = findViewById(R.id.txtContent);
+        ImageView imgPhoto = findViewById(R.id.imgPhoto);
+
+        if(foundBean != null) {
+            txtTitle.setText(foundBean.getTitle());
+            txtContent.setText(foundBean.getContent());
+        }
+
+
+        if(foundBean != null && foundBean.getImgPath() != null ) {
+            Bitmap bitmap = BitmapFactory.decodeFile( foundBean.getImgPath() );
+            imgPhoto.setImageBitmap(bitmap);
+        }
+
+/**
+        if(lostBean != null) {
+            txtTitle.setText(lostBean.getTitle());
+            txtContent.setText(lostBean.getContent());
+        }
+
+
+        if(lostBean != null && lostBean.getImgPath() != null ) {
+            Bitmap bitmap = BitmapFactory.decodeFile( lostBean.getImgPath() );
+            imgPhoto.setImageBitmap(bitmap);
+        }
+**/
+
+    }
+}

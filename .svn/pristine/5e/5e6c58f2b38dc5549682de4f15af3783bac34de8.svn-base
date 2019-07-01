@@ -1,0 +1,90 @@
+package com.example.user.finalproject;
+
+// 게시물 수정하는 액티비티
+
+import android.app.Dialog;
+import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.support.v7.app.AppCompatActivity;
+import android.os.Bundle;
+import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.Toast;
+
+import com.example.user.finalproject.bean.FoundBean;
+import com.example.user.finalproject.bean.SaveBean;
+import com.example.user.finalproject.bean.Util;
+import com.example.user.finalproject.tab.TabFindFragment;
+import com.example.user.finalproject.tab.TabMainActivity;
+import com.google.gson.Gson;
+
+import java.util.List;
+
+public class FoundUpdateActivity extends AppCompatActivity {
+
+    private EditText mEdtTitle;
+    private EditText mEdtContent;
+    private EditText mEdtPwd;
+    private ImageView mImgCamera;
+    private FoundBean mFoundBean;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_found_update);
+
+        mFoundBean = (FoundBean)getIntent().getSerializableExtra(FoundBean.class.getName());
+
+        mEdtTitle = findViewById(R.id.edtTitle);
+        mEdtContent = findViewById(R.id.edtContent);
+        mEdtPwd = findViewById(R.id.edtPwd);
+        mImgCamera = findViewById(R.id.imgCamera);
+
+        mEdtTitle.setText(mFoundBean.getTitle());
+        mEdtContent.setText(mFoundBean.getContent());
+
+
+        if(mFoundBean != null && mFoundBean.getImgPath() != null) {
+            Bitmap bitmap = BitmapFactory.decodeFile(mFoundBean.getImgPath());
+            mImgCamera.setImageBitmap(bitmap);
+        }
+
+
+        Button btnUpdate = findViewById(R.id.btnUpdate);
+
+        btnUpdate.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+
+                if (!mFoundBean.getEdtPwd().equals(mEdtPwd.getText().toString())) {
+                    Toast.makeText(FoundUpdateActivity.this, "비밀번호가 일치하지 않습니다.", Toast.LENGTH_LONG).show();
+                } else if(mFoundBean.getEdtPwd().equals(mEdtPwd.getText().toString())) {
+                    mFoundBean.setTitle(mEdtTitle.getText().toString());
+                    mFoundBean.setContent(mEdtContent.getText().toString());
+
+                    Gson gson = new Gson();
+                    String jsonStr = Util.openFile(FoundUpdateActivity.this, SaveBean.class.getName());
+                    SaveBean saveBean = gson.fromJson(jsonStr, SaveBean.class);
+
+                    // 저장
+                    saveBean.getFoundBeanList().set( mFoundBean.getSelIdx(), mFoundBean );
+
+                    String jsonStr2 = gson.toJson(saveBean);
+                    Util.saveFile(FoundUpdateActivity.this, SaveBean.class.getName(), jsonStr2);
+
+                    Intent i = new Intent(FoundUpdateActivity.this, TabMainActivity.class);
+                    i.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP|Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                    startActivity(i);
+                }
+
+            }
+        });
+
+    }
+
+
+}
